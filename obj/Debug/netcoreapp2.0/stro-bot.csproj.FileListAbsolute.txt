@@ -1,0 +1,10 @@
+/home/sean/Desktop/stro-bot/bin/Debug/netcoreapp2.0/stro-bot.deps.json
+/home/sean/Desktop/stro-bot/bin/Debug/netcoreapp2.0/stro-bot.runtimeconfig.json
+/home/sean/Desktop/stro-bot/bin/Debug/netcoreapp2.0/stro-bot.runtimeconfig.dev.json
+/home/sean/Desktop/stro-bot/bin/Debug/netcoreapp2.0/stro-bot.dll
+/home/sean/Desktop/stro-bot/bin/Debug/netcoreapp2.0/stro-bot.pdb
+/home/sean/Desktop/stro-bot/obj/Debug/netcoreapp2.0/stro-bot.csproj.CoreCompileInputs.cache
+/home/sean/Desktop/stro-bot/obj/Debug/netcoreapp2.0/stro-bot.AssemblyInfoInputs.cache
+/home/sean/Desktop/stro-bot/obj/Debug/netcoreapp2.0/stro-bot.AssemblyInfo.cs
+/home/sean/Desktop/stro-bot/obj/Debug/netcoreapp2.0/stro-bot.dll
+/home/sean/Desktop/stro-bot/obj/Debug/netcoreapp2.0/stro-bot.pdb
