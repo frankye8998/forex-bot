@@ -11,15 +11,11 @@ public class TestModule : ModuleBase<SocketCommandContext>
 
     [Command("whoami")]
     [Summary("Returns info of the invoker. ")]
-    public async Task whoami(IUser user)
+    public async Task whoami(IUser user = null)
     {
-        if (user != null)
-        {
-            await ReplyAsync(user.ToString());
-            return;
-        }
-        else
-            await ReplyAsync(Context.Message.Author.ToString());
+        if (user == null)
+            user = Context.User;
+        await ReplyAsync(user.ToString());
     }
 }
 #endif
