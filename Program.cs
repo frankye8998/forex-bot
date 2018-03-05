@@ -12,11 +12,10 @@ namespace stro_bot
 {
     class Program
     {
-        public IConfigurationRoot Configuration { get; set; }
+        public IConfigurationRoot Configuration { get; private set; }
         private CommandService _commands;
         private DiscordSocketClient _client;
         private IServiceProvider _services;
-        // private IConfigurationRoot _configuration;
         private string prefix;
 
         static void Main(string[] args)
