@@ -29,6 +29,7 @@ class LunaNodeStructs
         public VirtualMachine[] vms { get; set; }
         public string success { get; }
         public bool successful { get { return success == "yes"; } }
+        public string error { get; }
     }
 }
 
