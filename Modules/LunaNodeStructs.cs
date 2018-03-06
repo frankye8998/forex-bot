@@ -32,10 +32,17 @@ class LunaNodeStructs
     }
 }
 
+/*
 public class LunaNodeStructsConverter<VirtualMachine> : JsonConverter
 {
     public overide void WriteJson(JsonWriter writer, VirtualMachine value, JsonSerializer serializer)
     {
         writer.WriteValueAsync("");
     }
+
+    public override bool CanConvert(System.Type objectType)
+    {
+        if (objectType == )
+    }
 }
+*/

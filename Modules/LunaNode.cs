@@ -87,4 +87,12 @@ public class LunaNode : ModuleBase<SocketCommandContext>
         LunaNodeStructs.VmList vms = await getVms();
         await ReplyAsync(vms.vms[1].name);
     }
+
+    [Command("timcpt")]
+    [Alias()]
+    [Summary("")]
+    public async Task timcpt(string command)
+    {
+        ;
+    }
 }
