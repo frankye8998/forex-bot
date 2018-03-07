@@ -105,6 +105,26 @@ public class LunaNode : ModuleBase<SocketCommandContext>
         return serializer.Deserialize<ApiRequest>(reader);
     }
 
+    private async Task<ApiRequest> startVm(string vm_id)
+    {
+        StreamReader sr = new StreamReader(await postAction("vm", "start", "vm_id=" + vm_id));
+        JsonReader reader = new JsonTextReader(sr);
+        
+        JsonSerializer serializer = new JsonSerializer();
+
+        return serializer.Deserialize<ApiRequest>(reader);
+    }
+
+    private async Task<ApiRequest> stopVm(string vm_id)
+    {
+        StreamReader sr = new StreamReader(await postAction("vm", "stop", "vm_id=" + vm_id));
+        JsonReader reader = new JsonTextReader(sr);
+        
+        JsonSerializer serializer = new JsonSerializer();
+
+        return serializer.Deserialize<ApiRequest>(reader);
+    }
+
     #if DEBUG
     [Command("testhttp")]
     [Summary("Test bot HTTP code. ")]
@@ -151,6 +171,7 @@ public class LunaNode : ModuleBase<SocketCommandContext>
                         field.Value = vm.vm_id;
                         field.IsInline = true;
                         embed.Fields.Add(field);
+                        embed.Color = Color.Blue;
                     }
                 }
 
@@ -159,6 +180,7 @@ public class LunaNode : ModuleBase<SocketCommandContext>
                     embed.Title = "Error Getting VMs!";
                     embed.ImageUrl = "https://upload.wikimedia.org/wikipedia/commons/7/74/Feedbin-Icon-error.svg";
                     embed.Description = "Error getting VM list: " + vms.error;
+                    embed.Color = Color.Red;
                 }
                 // await ReplyAsync(message);
                 await ReplyAsync("", false, embed.Build());
@@ -253,24 +275,83 @@ public class LunaNode : ModuleBase<SocketCommandContext>
                 await ReplyAsync("", false, embed.Build());
                 return;
             case "start":
+                if (args.Length > 1)
+                {
+                    ApiRequest startrequest = await startVm(args[1]);
+                    embed.Title = "Start VM";
+                    if (startrequest.successful)
+                    {
+                        embed.Color = Color.Green;
+                        embed.Description = "Startup VM successful";
+                    }
+                    else
+                    {
+                        embed.Color = Color.Red;
+                        embed.Description = "Startup VM failed: " + startrequest.error;
+                    }
+                    await ReplyAsync("", false, embed.Build());
+                }
                 return;
             case "stop":
+                if (args.Length > 1)
+                {
+                    ApiRequest shutdownRequest = await stopVm(args[1]);
+                    embed.Title = "Shutdown VM";
+                    if (shutdownRequest.successful)
+                    {
+                        embed.Color = Color.Green;
+                        embed.Description = "Shutdown VM successful";
+                    }
+                    else
+                    {
+                        embed.Color = Color.Red;
+                        embed.Description = "Shutdown VM failed: " + shutdownRequest.error;
+                    }
+                    await ReplyAsync("", false, embed.Build());
+                }
                 return;
             case "shelve":
+                if (args.Length > 1)
+                {
+                    ApiRequest shelveRequest = await shelveVm(args[1]);
+                    embed.Title = "Shelve VM";
+                    if (shelveRequest.successful)
+                    {
+                        embed.Color = Color.Green;
+                        embed.Description = "Shelve VM successful";
+                    }
+                    else
+                    {
+                        embed.Color = Color.Red;
+                        embed.Description = "Shelve VM failed: " + shelveRequest.error;
+                    }
+                    await ReplyAsync("", false, embed.Build());
+                }
                 return;
             case "unshelve":
                 if (args.Length > 1)
                 {
-                    ApiRequest shelveRequest = await shelveVm(args[1]);
+                    ApiRequest unshelveRequest = await unshelveVm(args[1]);
+                    embed.Title = "Unshelve VM";
+                    if (unshelveRequest.successful)
+                    {
+                        embed.Color = Color.Green;
+                        embed.Description = "Unshelve VM successful";
+                    }
+                    else
+                    {
+                        embed.Color = Color.Red;
+                        embed.Description = "Unshelve VM failed: " + unshelveRequest.error;
+                    }
                     await ReplyAsync("", false, embed.Build());
                 }
                 return;
             case "rename":
-                return;
+                throw new System.NotImplementedException();
             case "help":
             default:
                 embed.Title = "Help";
-                embed.Description = "TODO! PM @CurrentlyQuestioning#1234 for assistance";
+                embed.Description = "TODO! (SOON™)\nPM @CurrentlyQuestioning#1234 for assistance";
             return;
         }
     }

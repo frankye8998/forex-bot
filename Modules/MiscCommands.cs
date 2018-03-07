@@ -10,4 +10,14 @@ public class MiscCommands : ModuleBase<SocketCommandContext>
     {
         await channel.SendMessageAsync(content);
     }
+
+    [Command("version")]
+    [Summary("")]
+    [Alias("ver", "build")]
+    public async Task version()
+    {
+        System.Reflection.Assembly thisAssem = typeof(stro_bot.Program).Assembly;
+        System.Reflection.AssemblyName thisAssemName = thisAssem.GetName();
+        await ReplyAsync(thisAssemName.Version.ToString());
+    }
 }
