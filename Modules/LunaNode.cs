@@ -6,8 +6,10 @@ using System.Net.Http;
 using System.IO;
 using Microsoft.Extensions.Configuration;
 using Newtonsoft.Json;
+
 public class LunaNode : ModuleBase<SocketCommandContext>
 {
+    // TODO: Global config that doesnt leave this hardcoded
     private static string apiid = "";
     private static string apikey = "";
     // private IConfigurationRoot Configuration;
@@ -34,6 +36,13 @@ public class LunaNode : ModuleBase<SocketCommandContext>
         await System.Console.Out.WriteLineAsync("Requested " + response.RequestMessage.RequestUri.AbsoluteUri);
         #endif
         var stream = await response.Content.ReadAsStreamAsync();
+
+        #if DEBUG
+        StreamReader sr = new StreamReader(stream);
+        string srread = await sr.ReadToEndAsync();
+        await System.Console.Out.WriteLineAsync(srread);
+        stream = new MemoryStream(System.Text.Encoding.Default.GetBytes(srread));
+        #endif
         // byte[] streamresult = new byte[stream.Length];
         // await stream.ReadAsync(streamresult, 0, unchecked((int)stream.Length));
         // StreamReader sr = new StreamReader(stream);
@@ -56,16 +65,44 @@ public class LunaNode : ModuleBase<SocketCommandContext>
         return await sr.ReadToEndAsync(); 
     }
 
-    private async Task<LunaNodeStructs.VmList> getVms()
+    private async Task<VmList> getVms()
     {
         StreamReader sr = new StreamReader(await postAction("vm", "list"));
         JsonReader reader = new JsonTextReader(sr);
         
         JsonSerializer serializer = new JsonSerializer();
 
-        // read the json from a stream
-        // json size doesn't matter because only a small piece is read at a time from the HTTP request
-        return serializer.Deserialize<LunaNodeStructs.VmList>(reader); 
+        return serializer.Deserialize<VmList>(reader); 
+    }
+
+    private async Task<VmState> getVmInfo(string vm_id)
+    {
+        StreamReader sr = new StreamReader(await postAction("vm", "info", "vm_id=" + vm_id));
+        JsonReader reader = new JsonTextReader(sr);
+        
+        JsonSerializer serializer = new JsonSerializer();
+
+        return serializer.Deserialize<VmState>(reader);
+    }
+
+    private async Task<ApiRequest> shelveVm(string vm_id)
+    {
+        StreamReader sr = new StreamReader(await postAction("vm", "shelve", "vm_id=" + vm_id));
+        JsonReader reader = new JsonTextReader(sr);
+        
+        JsonSerializer serializer = new JsonSerializer();
+
+        return serializer.Deserialize<ApiRequest>(reader);
+    }
+
+    private async Task<ApiRequest> unshelveVm(string vm_id)
+    {
+        StreamReader sr = new StreamReader(await postAction("vm", "unshelve", "vm_id=" + vm_id));
+        JsonReader reader = new JsonTextReader(sr);
+        
+        JsonSerializer serializer = new JsonSerializer();
+
+        return serializer.Deserialize<ApiRequest>(reader);
     }
 
     #if DEBUG
@@ -93,15 +130,154 @@ public class LunaNode : ModuleBase<SocketCommandContext>
     [Alias("luna", "server")]
     [Summary("Commands for LunaNode integrations")]
     // [RequireUserPermission(GuildPermission.Administrator)]
-    public async Task lunanode()
+    public async Task lunanode(params string[] args)
     {
-        LunaNodeStructs.VmList vms = await getVms();
-        await ReplyAsync(vms.vms[1].name);
+        // TODO: Better command handling, switch feels a bit messy
+
+        EmbedBuilder embed = new EmbedBuilder();
+        switch (args[0])
+        {
+            case "list":
+                embed.Title = "Virtual Machine List";
+                VmList vms = await getVms();
+                if (vms.successful)
+                {
+                    EmbedFieldBuilder field;
+                    foreach (VirtualMachine vm in vms.vms)
+                    {
+                        // message += vm.name + ": " + vm.vm_id + "\n";
+                        field = new EmbedFieldBuilder();
+                        field.Name = vm.name;
+                        field.Value = vm.vm_id;
+                        field.IsInline = true;
+                        embed.Fields.Add(field);
+                    }
+                }
+
+                else
+                {
+                    embed.Title = "Error Getting VMs!";
+                    embed.ImageUrl = "https://upload.wikimedia.org/wikipedia/commons/7/74/Feedbin-Icon-error.svg";
+                    embed.Description = "Error getting VM list: " + vms.error;
+                }
+                // await ReplyAsync(message);
+                await ReplyAsync("", false, embed.Build());
+                return;
+            case "query":
+                if (args.Length > 1)
+                {
+                    VmState state = await getVmInfo(args[1]);
+                    if (state.successful)
+                    {
+                        embed.Color = Color.Blue;
+                        EmbedFieldBuilder field = new EmbedFieldBuilder();
+                        embed.Title = state.extra.name;
+                        field.Name = "Status";
+                        field.Value = state.info.status_nohtml;
+                        field.IsInline = true;
+                        embed.Fields.Add(field);
+                        /*field.Name = "Task State";
+                        field.Value = state.info.task_state;
+                        field.IsInline = true;
+                        embed.Fields.Add(field);*/
+
+                        field = new EmbedFieldBuilder();
+                        field.Name = "Plan ID";
+                        field.Value = state.extra.plan_id;
+                        field.IsInline = true;
+                        embed.Fields.Add(field);
+
+                        field = new EmbedFieldBuilder();
+                        field.Name = "Hostname";
+                        field.Value = state.extra.hostname;
+                        field.IsInline = true;
+                        embed.Fields.Add(field);
+
+                        field = new EmbedFieldBuilder();
+                        field.Name = "Primary IP";
+                        field.Value = state.extra.primaryip;
+                        field.IsInline = true;
+                        embed.Fields.Add(field);
+
+                        field = new EmbedFieldBuilder();
+                        field.Name = "RAM";
+                        field.Value = (double)(state.extra.ram / 1024) + "GB";
+                        field.IsInline = true;
+                        embed.Fields.Add(field);
+
+                        field = new EmbedFieldBuilder();
+                        field.Name = "vCPUs";
+                        field.Value = state.extra.vcpu;
+                        field.IsInline = true;
+                        embed.Fields.Add(field);
+
+                        field = new EmbedFieldBuilder();
+                        field.Name = "Storage";
+                        field.Value = state.extra.storage + "GB";
+                        field.IsInline = true;
+                        embed.Fields.Add(field);
+
+                        field = new EmbedFieldBuilder();
+                        field.Name = "Bandwidth";
+                        field.Value = state.extra.bandwith + "GB";
+                        field.IsInline = true;
+                        embed.Fields.Add(field);
+                        
+                        field = new EmbedFieldBuilder();
+                        field.Name = "Region";
+                        field.Value = state.extra.region;
+                        field.IsInline = true;
+                        embed.Fields.Add(field);
+
+                        field = new EmbedFieldBuilder();
+                        field.Name = "OS Status";
+                        field.Value = state.extra.os_status;
+                        field.IsInline = true;
+                        embed.Fields.Add(field);
+                    }
+
+                    else
+                    {
+                        embed.Title = "Error Getting State!";
+                        embed.Description = "Error getting VM state: " + state.error;
+                    }
+                }
+
+                else
+                {
+                    embed.Title = "Missing arguments";
+                    embed.Description = "You must specify the ID of the VM to perform this action on. ";
+                    embed.Color = Color.Red;
+                }
+
+                await ReplyAsync("", false, embed.Build());
+                return;
+            case "start":
+                return;
+            case "stop":
+                return;
+            case "shelve":
+                return;
+            case "unshelve":
+                if (args.Length > 1)
+                {
+                    ApiRequest shelveRequest = await shelveVm(args[1]);
+                    await ReplyAsync("", false, embed.Build());
+                }
+                return;
+            case "rename":
+                return;
+            case "help":
+            default:
+                embed.Title = "Help";
+                embed.Description = "TODO! PM @CurrentlyQuestioning#1234 for assistance";
+            return;
+        }
     }
 
     // TODO: This is VERY hacky, short term fix, make JSON
     // deserializer and reintegrate into main command at later date (SOON™)
-    private static string timvm_id = "vm_id=0ce1476d-e2e3-4005-982c-665937323fdd";
+    /*
     [Command("timcpt")]
     [Alias()]
     [Summary("")]
@@ -109,17 +285,8 @@ public class LunaNode : ModuleBase<SocketCommandContext>
     {
         switch (command)
         {
-            case "query":
-            await ReplyAsync(await postActionString("vm", "info", timvm_id));
-            break;
-            case "start":
-            break;
-            case "stop":
-            break;
-            case "shelve":
-            break;
-            case "unshelve":
-            break;
+            
         }
     }
+    */
 }

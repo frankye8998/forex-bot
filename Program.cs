@@ -42,11 +42,11 @@ namespace stro_bot
             var builder = new ConfigurationBuilder();  // Create a new instance of the config builder
             #if DEBUG
             builder.SetBasePath(AppContext.BaseDirectory + "../../..");
-            #endif
-            #if RELEASE
+            #else
             builder.SetBasePath(AppContext.BaseDirectory);
             #endif
             Microsoft.Extensions.Configuration.JsonConfigurationExtensions.AddJsonFile(builder, "_configuration.json");
+            // serviceCollection.AddInstance<IConfigurationRoot>(builder.Build());
             Configuration = builder.Build(); // Build the configuration
 
             #if DEBUG
